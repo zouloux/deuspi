@@ -1,0 +1,50 @@
+{
+  "name": "@zouloux/deuspi",
+  "version": "0.1.0",
+  "description": "",
+  "main": "./dist/index.es2019.cjs",
+  "module": "./dist/index.es2020.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {"main": "./dist/index.es2019.cjs",
+    "reset": "rm -rf node_modules && npm i",
+    "clean": "rm -rf dist",
+    "build": "tsbundle build",
+    "publish": "tsbundle publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zouloux/deuspi.git"
+  },
+  "author": "Alexis Bouhet - ZoulouX",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zouloux/deuspi/issues"
+  },
+  "homepage": "https://github.com/zouloux/deuspi#readme",
+  "devDependencies": {
+    "@types/node": "^18.0.6",
+    "@zouloux/tsbundle": "^1.2.23"
+  },
+  "tsbundle": {
+    "output": "./dist/",
+    "exportBits": false,
+    "files": [
+      {
+        "input": "./src/index.ts",
+        "formats": [
+          "es2017.cjs",
+          "es2020.mjs"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "@parcel/reporter-cli": "^2.6.2",
+    "@zouloux/cli": "^0.1.7",
+    "@zouloux/ecma-core": "^0.1.1",
+    "@zouloux/files": "^3.0.1",
+    "parcel": "^2.6.2",
+    "stach": "^1.0.1",
+    "typescript": "^4.7.4"
+  }
+}
