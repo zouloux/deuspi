@@ -1,0 +1,52 @@
+{
+  "name": "vite-plugin-stachtml",
+  "version": "1.0.1",
+  "description": "Stach templating for your vite index.html",
+  "type": "module",
+  "main": "./dist/vite-plugin-stachtml.es2019.cjs",
+  "module": "./dist/vite-plugin-stachtml.es2022.mjs",
+  "types": "./dist/vite-plugin-stachtml.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsbundle build",
+    "publish": "npm run clean && tsbundle publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zouloux/vite-plugin-stachtml.git"
+  },
+  "keywords": [
+    "vite",
+    "plugin",
+    "stach",
+    "stahtml",
+    "html",
+    "template",
+    "templating"
+  ],
+  "author": "Alexis Bouhet ( ZoulouX )",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zouloux/vite-plugin-stachtml/issues"
+  },
+  "homepage": "https://github.com/zouloux/vite-plugin-stachtml#readme",
+  "dependencies": {
+    "stach": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@zouloux/tsbundle": "^1.4.0"
+  },
+  "tsbundle": {
+    "output": "./dist",
+    "formats": [
+      "es2019.cjs",
+      "es2022.mjs"
+    ],
+    "files": [
+      {
+        "input": "./src/vite-plugin-stachtml.ts"
+      }
+    ]
+  }
+}
