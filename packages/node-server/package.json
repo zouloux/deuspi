@@ -1,0 +1,51 @@
+{
+  "name": "@zouloux/node-server",
+  "version": "1.0.1",
+  "description": "Node server with esbuild, watch mode, and a fastify proxy for dev assets.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zouloux/node-server.git"
+  },
+  "author": "Alexis Bouhet ( ZoulouX )",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zouloux/node-server/issues"
+  },
+  "homepage": "https://github.com/zouloux/node-server#readme",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsbundle build",
+    "publish": "npm run clean && tsbundle publish"
+  },
+  "dependencies": {
+    "@zouloux/cli": "^0.2.1",
+    "@zouloux/ecma-core": "^0.2.3",
+    "@zouloux/signal": "^0.2.4",
+    "esbuild": "^0.17.5"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@zouloux/tsbundle": "^1.4.0",
+    "fastify": "^4.12.0",
+    "node-fetch": "^3.3.0"
+  },
+  "tsbundle": {
+    "output": "./dist",
+    "formats": [
+      "es2019.cjs",
+      "es2022.mjs"
+    ],
+    "files": [
+      {
+        "input": "./src/server-build.ts"
+      },
+      {
+        "input": "./src/vite-proxy.ts"
+      },
+      {
+        "input": "./src/vite-custom-logger.ts"
+      }
+    ]
+  }
+}
