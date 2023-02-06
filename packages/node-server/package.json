@@ -1,8 +1,11 @@
 {
   "name": "@zouloux/node-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Node server with esbuild, watch mode, and a fastify proxy for dev assets.",
   "type": "module",
+  "main": "./dist/index.es2019.cjs",
+  "module": "./dist/index.es2022.mjs",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zouloux/deuspi.git"
@@ -38,13 +41,10 @@
     ],
     "files": [
       {
-        "input": "./src/server-build.ts"
+        "input": "./src/index.ts"
       },
       {
         "input": "./src/vite-proxy.ts"
-      },
-      {
-        "input": "./src/vite-custom-logger.ts"
       }
     ]
   }

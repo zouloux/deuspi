@@ -1,4 +1,3 @@
-import { FastifyInstance } from "fastify";
 import { default as fetch } from "node-fetch";
 import { leading, trailing } from "@zouloux/ecma-core";
 
@@ -8,8 +7,8 @@ interface IDevProxyMiddlewareOptions {
 
 // TODO : Pass headers from client to server
 // TODO : Manage other methods than GET
-export function viteProxy ( server:FastifyInstance, options:IDevProxyMiddlewareOptions ) {
-	server.addHook('onRequest', async (request, reply,) => {
+export function viteProxy ( server, options:IDevProxyMiddlewareOptions ) {
+	server.addHook('onRequest', async (request, reply) => {
 		// Try to relay any request to the dev server
 		const proxyURL = trailing( options.upstream, false ) + leading( request.url, true )
 		let proxyFetchRequest
@@ -17,9 +16,7 @@ export function viteProxy ( server:FastifyInstance, options:IDevProxyMiddlewareO
 			proxyFetchRequest = await fetch( proxyURL )
 		}
 		// Cannot contact proxiyed server, skip
-		catch (e) {
-			return
-		}
+		catch (e) { return }
 		// Fetch worked, but we got an HTTP error
 		// Continue with other route handlers
 		if ( !proxyFetchRequest.ok )

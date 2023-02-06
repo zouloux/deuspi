@@ -1,15 +1,46 @@
-import { build } from "esbuild"
+import { BuildContext, context, Plugin, BuildOptions } from "esbuild"
 import { spawn } from "child_process"
 import { Signal } from "@zouloux/signal"
-import { newLine, nicePrint, oraTask, parseArguments, clearScreen } from "@zouloux/cli";
+import { newLine, nicePrint, parseArguments, clearScreen } from "@zouloux/cli";
 import { delay } from "@zouloux/ecma-core";
 
 /**
- * TODO : Faire un joli packet npm de tout ça
- * @zouloux/node-server
- * server.config.js
  * TODO : Add on signal ( build / fail / etc )
+ * TODO : Add more options
  */
+
+// ----------------------------------------------------------------------------- TYPES
+
+type TBuildMode = ("dev" | "build")
+
+export interface INodeServerConfig
+{
+	// Bundle input and output
+	input	: string;
+	output	: string;
+	// Dev mode
+	dev	?: {
+		command		: string
+		cwd			?: string
+		killSignal	?: string
+	},
+	// Es options
+	esOptions	?:Partial<BuildOptions>
+	esPlugins	?:Plugin[]
+	// Logger
+	logger	?:ILogger
+	logPrefix ?:string
+	// Env
+	env 	?:any
+}
+
+export interface ILogger {
+	prefix	?:string
+	noPrefixOnNextLine ?: false
+	print ( content, options? )
+	error ( message, code? )
+	clear ()
+}
 
 // ----------------------------------------------------------------------------- PLUGIN
 
@@ -19,7 +50,7 @@ import { delay } from "@zouloux/ecma-core";
  * ../../node_modules/@zouloux/cli/dist/index.js
  * With this plugin, output will be kept as import("@zouloux/cli")
  */
-const keepNodeModulesPlugin = {
+export const keepNodeModulesPlugin:Plugin = {
 	name: 'keep-node-modules',
 	setup ( build ) {
 		// Intercept resolution of node modules
@@ -35,38 +66,62 @@ const keepNodeModulesPlugin = {
 	}
 }
 
+/**
+ * Add watch plugin in dev mode only.
+ * Will show build results and re-start node server when build is completed.
+ */
+export const watchPlugin:Plugin = {
+	name: 'watch-plugin',
+	setup ( build ) {
+		let isFirst = true
+		build.onEnd( async ( result ) => {
+			buildResult( result, isFirst )
+			isFirst = false
+			// Restart dev server after rebuild
+			await delay(.3)
+			config.logger.clear();
+			restartServer()
+		})
+	}
+}
+
 // ----------------------------------------------------------------------------- LOGGER
 
-// TODO : To CLI with an interface ?
-const defaultLogger = {
-	prefix: '{d}server{/} - ',
-	noPrefixOnNextLine: false,
-	print ( content, options? ) { // TODO : add type or level ( regular / important / warning / success / error / ... for styling )
-		if ( !this.noPrefixOnNextLine )
-			content = this.prefix + content
-		nicePrint( content, options )
-		this.noPrefixOnNextLine = ( options && !options.newLine )
-	},
-	error ( message, code ) {
-		console.error( message )
-	},
-	clear () {
-		clearScreen()
+/**
+ * Create default logger, compatible with vite-custom-logger
+ */
+function createDefaultLogger ( prefix ):ILogger {
+	return {
+		prefix: `{d}${prefix}{/} - `,
+		noPrefixOnNextLine: false,
+		print ( content, options? ) { // TODO : add type or level ( regular / important / warning / success / error / ... for styling )
+			if ( !this.noPrefixOnNextLine )
+				content = this.prefix + content
+			nicePrint( content, options )
+			this.noPrefixOnNextLine = ( options && !options.newLine )
+		},
+		error ( message, code ) {
+			console.error( message )
+		},
+		clear () {
+			clearScreen()
+		}
 	}
 }
 
 // ----------------------------------------------------------------------------- CONFIG
 
 // Config and args are module scoped
-let config;
-let args;
+let config		:INodeServerConfig;
+let buildMode	:TBuildMode
 
 // ----------------------------------------------------------------------------- DEV SERVER
 
 let serverInstance
 let onServerExitSignal = Signal()
 let serverBusyLocked = false
-let builder
+// let builder
+let buildContext:BuildContext
 
 const onServerExit = () => new Promise<void>( resolve => {
 	if (!serverInstance) resolve();
@@ -106,17 +161,17 @@ async function startServer () {
 async function stopServer () {
 	if ( !serverInstance ) return;
 	serverBusyLocked = true
-	//await delay(1)
-	await oraTask(`Stopping server`, t => new Promise<void>( resolve => {
+	await new Promise<void>( resolve => {
+		config.logger.print("{b/c}Stopping server ...", { newLine: false });
 		onServerExit().then( async code => {
-			t.success('Server stopped')
+			config.logger.print('{b/g}Stopped')
 			serverBusyLocked = false
 			resolve()
 		})
 		// FIXME : Other signals to force exit ?
 		// FIXME : 'SIGINT' // force ? "SIGKILL" : "SIGTERM"
 		serverInstance.kill( config.dev.killSignal ?? 'SIGINT' );
-	}))
+	})
 }
 
 async function restartServer () {
@@ -135,10 +190,12 @@ function buildFailed ( error, code = 1 ) {
 
 function buildResult ( result, isFirst = false ) {
 	result.warnings.forEach( w => config.logger.print(`{b/o}Warn > ${w}`) )
-	result.errors.length === 0 && config.logger.print(isFirst ? `{b/g} success`: `{b/g}Build success`);
+	result.errors.length === 0 && config.logger.print(isFirst ? `{b/g} success`: `{b/g}Rebuilt ✨`);
 }
 
-export async function buildServer ( configHandler ) {
+type IConfigHandler = INodeServerConfig | ((mode:TBuildMode) => INodeServerConfig)
+
+export async function buildServer ( configHandler:IConfigHandler ) {
 
 	defineBuildConfig( configHandler )
 
@@ -148,48 +205,48 @@ export async function buildServer ( configHandler ) {
 	// process.exit();
 	// Build server
 	try {
-		builder = await build({
+		const plugins = [
+			keepNodeModulesPlugin,
+			...config.esPlugins,
+		];
+		if ( buildMode === "dev" )
+			plugins.push( watchPlugin )
+		buildContext = await context({
 			target: 'node16',
 			platform: 'node',
 			format: 'esm',
 			minify: false,
 			bundle: true,
-			incremental: args.flags.dev,
 			// FIXME
 			logLevel: 'warning',
-			plugins: [ keepNodeModulesPlugin ],
+			plugins,
 			// Inject custom es options before forced options
 			...config.esOptions,
 			// Forced options (not available in config)
 			entryPoints: [ config.input ],
 			outfile: config.output,
-			watch: !args.flags.dev ? null : {
-				async onRebuild ( error, result ) {
-					// Halt on build error
-					if ( error )
-						buildFailed( error )
-					else
-						buildResult( builder )
-					// Restart dev server after rebuild
-					await delay(.5)
-					config.logger.clear();
-					restartServer()
-				},
-			}
 		})
-		buildResult( builder, true )
 	}
-		// Display errors
+	// Display errors
 	catch ( error ) {
 		newLine()
 		buildFailed( error )
+		return;
 	}
-	// Start dev server in dev mode
-	if ( args.flags.dev ) {
+	// Dev mode
+	if ( buildMode === "dev" ) {
+		// Verify config, we need a dev command
 		!config.dev && nicePrint(`{b/r}Please set dev config to use dev mode.`, {
 			code: 1
 		})
-		startServer()
+		// Start watch ( watch plugin will start server )
+		await buildContext.watch()
+	}
+	// Build mode
+	else {
+		const results = await buildContext.rebuild();
+		buildResult( results, true )
+		await buildContext.dispose();
 	}
 }
 
@@ -197,24 +254,17 @@ export async function buildServer ( configHandler ) {
 // ----------------------------------------------------------------------------- START
 
 function defineBuildConfig ( configHandler ) {
-	// Parse arguments and store in module scope
-	args = parseArguments({
-		flagAliases: {
-			d: 'dev'
-		},
-		defaultFlags: {
-			dev: false
-		}
-	})
+	// Get build mode from args
+	const args = parseArguments();
+	buildMode = args.arguments[0] as TBuildMode
+	if ( buildMode !== "dev" && buildMode !== "build" )
+		nicePrint(`{b/r}Invalid build mode. {b/w}dev{b/r} or {b/w}build{b/r} modes are accepted.`, { code: 1 })
 	// Get user config
 	let userConfig
 	if ( typeof configHandler === "function" )
-		userConfig = configHandler({
-			dev: args.flags.dev
-		})
-	else if ( typeof configHandler === "object" && !Array.isArray(configHandler) ) {
+		userConfig = configHandler({ mode: buildMode })
+	else if ( typeof configHandler === "object" && !Array.isArray(configHandler) )
 		userConfig = configHandler
-	}
 	else {
 		nicePrint(`{b/r}Invalid config ${configHandler}`)
 		process.exit(1)
@@ -226,8 +276,9 @@ function defineBuildConfig ( configHandler ) {
 	// Compute config from default and user config
 	// Store in module scope
 	config = {
-		logger: defaultLogger,
+		logger: createDefaultLogger( userConfig.logPrefix ?? "server" ),
 		esOptions: {},
+		esPlugins: [],
 		...userConfig
 	}
 	// Compute default env from config

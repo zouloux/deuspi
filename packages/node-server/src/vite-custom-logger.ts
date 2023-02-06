@@ -4,11 +4,17 @@ import { nicePrint } from "@zouloux/cli";
  * TODO : Allow custom info / error / warn
  */
 
-export function createCustomViteLogger ( options ) {
+interface ICustomLoggerOptions
+{
+	prefix	?:string|boolean
+	isDev	?:boolean
+}
+
+export function createCustomViteLogger ( options:ICustomLoggerOptions ) {
 	options = {
-		prefix : `{d}vite{/} - `,
 		isDev : false,
 		...options,
+		prefix : options.prefix === false ? '' : `{d}${options.prefix ?? "vite"}{/} - `,
 	}
 
 	let firstMessage = true
