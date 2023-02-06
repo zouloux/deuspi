@@ -7,17 +7,17 @@ More info on [deuspi](https://github.com/zouloux/deuspi)
 ## Features
 
 #### Super fast
-Build with esbuild
+Will build your server with [esbuild](https://esbuild.github.io/), so typescript included.
 
 #### No module build.
-Will keep all imported modules into node_modules directory.
-Transfert `dist/` and `node_modules/` to your server.
+Will keep all imported modules into `node_modules` directory without compiling them.
+This is easier to manage and avoid a lot of useless typescript errors.
 
 #### Watch mode.
-Will restart your server everytime you change the source-code.
+Will restart your server everytime you change the source-code of your server.
 
-#### Play well with vite
-Includes a vite-proxy for dev mode.
+#### Plays well with vite
+Includes a vite-proxy for dev mode ! ( continue reading bellow )
 
 ## Server config
 
@@ -119,4 +119,29 @@ server.listen({
 	host: '0.0.0.0',
 	port: 80
 })
+```
+
+## Package config
+
+Here are some npm scripts to configure node-server and vite.
+
+`package.json`
+
+```json
+{
+  "scripts": {
+    "-- VITE --": "",
+    "vite-dev": "vite dev --host",
+    "vite-build": "vite build --emptyOutDir",
+    "vite-clean": "rm -rf node_modules/.vite dist/client/* && echo Vite cache cleaned",
+    "-- SERVER --": "",
+    "server-dev": "node server.config.js dev",
+    "server-build": "node server.config.js build",
+    "server-start": "cd dist/server/ && node server.js",
+    "-- BOTH --": "",
+    "dev": "clear && (npm run vite-dev --silent & (sleep .6 && npm run server-dev --silent) & wait)",
+    "build": "clear && npm run vite-build --silent && npm run server-build --silent",
+    "preview": "npm run build --silent && npm run server-start --silent"
+  }
+}
 ```

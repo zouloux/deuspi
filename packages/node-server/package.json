@@ -1,6 +1,6 @@
 {
   "name": "@zouloux/node-server",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Node server with esbuild, watch mode, and a fastify proxy for dev assets.",
   "type": "module",
   "main": "./dist/index.es2019.cjs",
