@@ -1,7 +1,4 @@
 
-
-
-
 window.addEventListener("load", () => {
 	document.body.append("Check dev tools")
 	fetch('./service.json')
@@ -9,6 +6,3 @@ window.addEventListener("load", () => {
 		.then( result => console.log( result.text ) )
 })
 
-
-test();
-// fdlkfjgdflkj()

@@ -1,0 +1,30 @@
+{
+  "name": "deuspi-preset-node-server",
+  "description": "",
+  "author": "",
+  "license": "",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "-- VITE --": "",
+    "dev": "vite dev --host",
+    "build": "vite build --emptyOutDir",
+    "preview": "npm run build --silent && vite preview",
+    "vite-clean": "rm -rf node_modules/.vite public/* && echo Vite cache cleaned"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.19",
+    "@vitejs/plugin-legacy": "^4.0.1",
+    "@zouloux/vite-config-helpers": "^1.0.0",
+    "typescript": "^4.9.5",
+    "vite-plugin-atomizer": "^0.2.3",
+    "vite-plugin-checker": "^0.5.5",
+    "vite-plugin-env": "^1.0.0",
+    "vite-plugin-inspect": "^0.7.15",
+    "vite-plugin-minify": "^1.5.2",
+    "vite-plugin-stachtml": "^1.0.1"
+  },
+  "dependencies": {
+    "@zouloux/ecma-core": "^0.2.3"
+  }
+}
