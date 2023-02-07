@@ -1,0 +1,26 @@
+{
+  "name": "@zouloux/vite-config-helpers",
+  "version": "1.0.0",
+  "description": "Vite config helpers",
+  "type" : "module",
+  "main": "vite-config-helpers.js",
+  "module" : "vite-config-helpers.js",
+  "scripts": {
+    "publish" : "npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zouloux/deuspi.git"
+  },
+  "keywords": [
+    "vite",
+    "config",
+    "helper"
+  ],
+  "author": "Alexis Bouhet ( ZoulouX )",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zouloux/deuspi/issues"
+  },
+  "homepage": "https://github.com/zouloux/deuspi#readme"
+}
