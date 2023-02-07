@@ -1,7 +1,0 @@
-.idea
-.DS_Store
-src/
-.gitignore
-tsconfig.json
-
-test/

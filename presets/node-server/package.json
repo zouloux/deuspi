@@ -1,0 +1,41 @@
+{
+  "name": "deuspi-preset-node-server",
+  "description": "",
+  "author": "",
+  "license": "",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "-- VITE --": "",
+    "vite-dev": "vite dev --host",
+    "vite-build": "vite build --emptyOutDir",
+    "vite-clean": "rm -rf node_modules/.vite dist/client/* && echo Vite cache cleaned",
+    "-- SERVER --": "",
+    "server-dev": "node-server dev",
+    "server-build": "node-server build",
+    "server-start": "cd dist/server/ && node server.js",
+    "-- BOTH --": "",
+    "dev": "clear && (npm run vite-dev --silent & (sleep .4 && npm run server-dev --silent) & wait)",
+    "build": "clear && npm run vite-build --silent && npm run server-build --silent",
+    "preview": "npm run build --silent && npm run server-start --silent"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.19",
+    "@vitejs/plugin-legacy": "^4.0.1",
+    "@zouloux/node-server": "^1.1.3",
+    "@zouloux/vite-config-helpers": "^1.0.0",
+    "vite-plugin-atomizer": "^0.2.3",
+    "vite-plugin-checker": "^0.5.5",
+    "vite-plugin-env": "^1.0.0",
+    "vite-plugin-inspect": "^0.7.15",
+    "vite-plugin-minify": "^1.5.2",
+    "vite-plugin-stachtml": "^1.0.1"
+  },
+  "dependencies": {
+    "@fastify/static": "^6.8.0",
+    "@zouloux/cli": "^0.2.1",
+    "@zouloux/ecma-core": "^0.2.3",
+    "fastify": "^4.12.0",
+    "node-fetch": "^3.3.0"
+  }
+}
