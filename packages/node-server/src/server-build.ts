@@ -257,11 +257,15 @@ export async function buildServer ( mode:TBuildMode ) {
 
 // ----------------------------------------------------------------------------- DEFINE CONFIG
 
-export function defineConfig ( configHandler ) {
+/**
+ * Define node-server config.
+ * Use the same pattern as vite config system.
+ */
+export function defineConfig ( configHandler:IConfigHandler ) {
 	// Get user config
 	let userConfig
 	if ( typeof configHandler === "function" )
-		userConfig = configHandler({ mode: buildMode })
+		userConfig = configHandler( buildMode )
 	else if ( typeof configHandler === "object" && !Array.isArray(configHandler) )
 		userConfig = configHandler
 	else {

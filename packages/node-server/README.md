@@ -30,7 +30,8 @@ Config file can be named `server.config.js` to get along `vite.config.js`.
 ```javascript
 import { defineConfig } from "@zouloux/node-server";
 
-defineConfig( () => {
+defineConfig( mode => {
+	// mode -> "dev" | "build" 
 	return {
 		input: 'src/server/server.ts',
 		output: 'dist/server/server.js',
