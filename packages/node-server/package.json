@@ -1,11 +1,15 @@
 {
   "name": "@zouloux/node-server",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Node server with esbuild, watch mode, and a fastify proxy for dev assets.",
   "type": "module",
   "main": "./dist/index.es2019.cjs",
   "module": "./dist/index.es2022.mjs",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "craft": "./dist/cli.es2022.mjs",
+    "craft-legacy": "./dist/cli.es2019.cjs"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zouloux/deuspi.git"
@@ -25,13 +29,12 @@
     "@zouloux/cli": "^0.2.1",
     "@zouloux/ecma-core": "^0.2.3",
     "@zouloux/signal": "^0.2.4",
-    "esbuild": "^0.17.5"
+    "esbuild": "^0.17.6",
+    "node-fetch": "^3.3.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
-    "@zouloux/tsbundle": "^1.4.0",
-    "fastify": "^4.12.0",
-    "node-fetch": "^3.3.0"
+    "@zouloux/tsbundle": "^1.4.0"
   },
   "tsbundle": {
     "output": "./dist",
@@ -41,10 +44,12 @@
     ],
     "files": [
       {
-        "input": "./src/index.ts"
+        "input": "./src/cli.ts",
+        "outName": "cli",
+        "filterGlob": "cli.*"
       },
       {
-        "input": "./src/vite-proxy.ts"
+        "input": "./src/index.ts"
       }
     ]
   }

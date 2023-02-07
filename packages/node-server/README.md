@@ -4,6 +4,10 @@ Node-server will build your node based server with esbuild, and proxy your vite 
 
 More info on [deuspi](https://github.com/zouloux/deuspi)
 
+## Install
+
+`npm i -D @zouloux/node-server`
+
 ## Features
 
 #### Super fast
@@ -24,9 +28,9 @@ Includes a vite-proxy for dev mode ! ( continue reading bellow )
 Config file can be named `server.config.js` to get along `vite.config.js`.
 
 ```javascript
-import { buildServer } from "@zouloux/node-server";
+import { defineConfig } from "@zouloux/node-server";
 
-buildServer( c => {
+defineConfig( () => {
 	return {
 		input: 'src/server/server.ts',
 		output: 'dist/server/server.js',
@@ -63,10 +67,13 @@ export interface INodeServerConfig
 ```
 
 ### Start server in dev mode
-`node server.config.js dev`
+- `node-server dev`
 
 ### Build for production
-`node server.config.js build`
+- `node-server build`
+
+### Custom config file
+- `node-server build --config custom.server.config.js`
 
 ## With vite
 
@@ -78,7 +85,7 @@ In build mode, you can serve generated assets as static resources with Express /
 
 ```javascript
 import { defineConfig } from 'vite'
-import { createCustomViteLogger } from "@zouloux/node-server/dist/vite-custom-logger.es2022.mjs";
+import { createCustomViteLogger } from "@zouloux/node-server";
 
 export default defineConfig( viteConfig => {
 	const isDev = viteConfig.mode === 'development'
@@ -97,7 +104,7 @@ export default defineConfig( viteConfig => {
 ```typescript
 import fastify from "fastify";
 import { fastifyStatic } from "@fastify/static";
-import { viteProxy } from "@zouloux/node-server/dist/vite-proxy.es2022.mjs";
+import { viteProxy } from "@zouloux/node-server";
 // Create server
 const server = fastify()
 // Proxy vite in dev mode
@@ -135,8 +142,8 @@ Here are some npm scripts to configure node-server and vite.
     "vite-build": "vite build --emptyOutDir",
     "vite-clean": "rm -rf node_modules/.vite dist/client/* && echo Vite cache cleaned",
     "-- SERVER --": "",
-    "server-dev": "node server.config.js dev",
-    "server-build": "node server.config.js build",
+    "server-dev": "node-server dev",
+    "server-build": "node-server build",
     "server-start": "cd dist/server/ && node server.js",
     "-- BOTH --": "",
     "dev": "clear && (npm run vite-dev --silent & (sleep .6 && npm run server-dev --silent) & wait)",

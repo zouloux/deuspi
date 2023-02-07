@@ -1,17 +1,17 @@
 import { BuildContext, context, Plugin, BuildOptions } from "esbuild"
 import { spawn } from "child_process"
 import { Signal } from "@zouloux/signal"
-import { newLine, nicePrint, parseArguments, clearScreen } from "@zouloux/cli";
+import { newLine, nicePrint, clearScreen } from "@zouloux/cli";
 import { delay } from "@zouloux/ecma-core";
 
 /**
- * TODO : Add on signal ( build / fail / etc )
+ * TODO : Add on signal in options ( build / fail / etc )
  * TODO : Add more options
  */
 
 // ----------------------------------------------------------------------------- TYPES
 
-type TBuildMode = ("dev" | "build")
+export type TBuildMode = ("dev" | "build")
 
 export interface INodeServerConfig
 {
@@ -41,6 +41,8 @@ export interface ILogger {
 	error ( message, code? )
 	clear ()
 }
+
+type IConfigHandler = INodeServerConfig | ((mode:TBuildMode) => INodeServerConfig)
 
 // ----------------------------------------------------------------------------- PLUGIN
 
@@ -120,8 +122,6 @@ let buildMode	:TBuildMode
 let serverInstance
 let onServerExitSignal = Signal()
 let serverBusyLocked = false
-// let builder
-let buildContext:BuildContext
 
 const onServerExit = () => new Promise<void>( resolve => {
 	if (!serverInstance) resolve();
@@ -134,6 +134,7 @@ async function startServer () {
 	// Generate command and spawn a new sub-process
 	const args = config.dev.command.split(" ")
 	serverInstance = spawn(args.shift(), args, {
+		// detached: false,
 		cwd: config.dev.cwd ?? process.cwd(),
 		env: config.env,
 		stdio: 'inherit'
@@ -158,19 +159,23 @@ async function startServer () {
 	serverBusyLocked = false
 }
 
+function killServer () {
+	// FIXME : Other signals to force exit ?
+	// FIXME : 'SIGINT' // force ? "SIGKILL" : "SIGTERM"
+	serverInstance.kill( config.dev.killSignal ?? 'SIGINT' );
+}
+
 async function stopServer () {
 	if ( !serverInstance ) return;
 	serverBusyLocked = true
 	await new Promise<void>( resolve => {
 		config.logger.print("{b/c}Stopping server ...", { newLine: false });
 		onServerExit().then( async code => {
-			config.logger.print('{b/g}Stopped')
+			config.logger.print(' {b/g}stopped')
 			serverBusyLocked = false
 			resolve()
 		})
-		// FIXME : Other signals to force exit ?
-		// FIXME : 'SIGINT' // force ? "SIGKILL" : "SIGTERM"
-		serverInstance.kill( config.dev.killSignal ?? 'SIGINT' );
+		killServer();
 	})
 }
 
@@ -181,6 +186,8 @@ async function restartServer () {
 }
 
 // ----------------------------------------------------------------------------- BUILD
+
+let buildContext:BuildContext
 
 function buildFailed ( error, code = 1 ) {
 	config.logger.print(`{b/r}Build failed`)
@@ -193,16 +200,15 @@ function buildResult ( result, isFirst = false ) {
 	result.errors.length === 0 && config.logger.print(isFirst ? `{b/g} success`: `{b/g}Rebuilt ✨`);
 }
 
-type IConfigHandler = INodeServerConfig | ((mode:TBuildMode) => INodeServerConfig)
-
-export async function buildServer ( configHandler:IConfigHandler ) {
-
-	defineBuildConfig( configHandler )
-
+/**
+ * Build server in watch or build mode.
+ */
+export async function buildServer ( mode:TBuildMode ) {
+	buildMode = mode
+	if ( !config )
+		throw new Error("Please use defineConfig in your server config file.")
 	// Print without line jump for the "success"
 	config.logger.print(`{b/c}Building server ...`, { newLine: false })
-	// console.log( config );
-	// process.exit();
 	// Build server
 	try {
 		const plugins = [
@@ -217,8 +223,7 @@ export async function buildServer ( configHandler:IConfigHandler ) {
 			format: 'esm',
 			minify: false,
 			bundle: true,
-			// FIXME
-			logLevel: 'warning',
+			logLevel: 'silent',
 			plugins,
 			// Inject custom es options before forced options
 			...config.esOptions,
@@ -250,15 +255,9 @@ export async function buildServer ( configHandler:IConfigHandler ) {
 	}
 }
 
+// ----------------------------------------------------------------------------- DEFINE CONFIG
 
-// ----------------------------------------------------------------------------- START
-
-function defineBuildConfig ( configHandler ) {
-	// Get build mode from args
-	const args = parseArguments();
-	buildMode = args.arguments[0] as TBuildMode
-	if ( buildMode !== "dev" && buildMode !== "build" )
-		nicePrint(`{b/r}Invalid build mode. {b/w}dev{b/r} or {b/w}build{b/r} modes are accepted.`, { code: 1 })
+export function defineConfig ( configHandler ) {
 	// Get user config
 	let userConfig
 	if ( typeof configHandler === "function" )
