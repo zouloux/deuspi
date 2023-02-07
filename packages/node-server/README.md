@@ -105,7 +105,7 @@ export default defineConfig( viteConfig => {
 ```typescript
 import fastify from "fastify";
 import { fastifyStatic } from "@fastify/static";
-import { viteProxy } from "@zouloux/node-server";
+import { viteProxy } from "@zouloux/node-server/dist/vite-proxy.es2022.mjs";
 // Create server
 const server = fastify()
 // Proxy vite in dev mode
