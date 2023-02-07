@@ -31,7 +31,7 @@ export interface INodeServerConfig
 	logger	?:ILogger
 	logPrefix ?:string
 	// Env
-	env 	?:any
+	env 	?:any|((env:any) => any)
 }
 
 export interface ILogger {
@@ -81,7 +81,7 @@ export const watchPlugin:Plugin = {
 			isFirst = false
 			// Restart dev server after rebuild
 			await delay(.3)
-			config.logger.clear();
+			_config.logger.clear();
 			restartServer()
 		})
 	}
@@ -114,65 +114,65 @@ function createDefaultLogger ( prefix ):ILogger {
 // ----------------------------------------------------------------------------- CONFIG
 
 // Config and args are module scoped
-let config		:INodeServerConfig;
-let buildMode	:TBuildMode
+let _config		:INodeServerConfig;
+let _buildMode	:TBuildMode
 
 // ----------------------------------------------------------------------------- DEV SERVER
 
-let serverInstance
-let onServerExitSignal = Signal()
-let serverBusyLocked = false
+let _serverInstance
+let _onServerExitSignal = Signal()
+let _serverBusyLocked = false
 
 const onServerExit = () => new Promise<void>( resolve => {
-	if (!serverInstance) resolve();
-	onServerExitSignal.add( resolve )
+	if (!_serverInstance) resolve();
+	_onServerExitSignal.add( resolve )
 })
 
 async function startServer () {
-	serverBusyLocked = true;
-	config.logger.print(`{b/c}Spawning server {/}{d}- ${config.dev.command}`)
+	_serverBusyLocked = true;
+	_config.logger.print(`{b/c}Spawning server {/}{d}- ${_config.dev.command}`)
 	// Generate command and spawn a new sub-process
-	const args = config.dev.command.split(" ")
-	serverInstance = spawn(args.shift(), args, {
+	const args = _config.dev.command.split(" ")
+	_serverInstance = spawn(args.shift(), args, {
 		// detached: false,
-		cwd: config.dev.cwd ?? process.cwd(),
-		env: config.env,
+		cwd: _config.dev.cwd ?? process.cwd(),
+		env: _config.env,
 		stdio: 'inherit'
 	});
 	// Listen for server exit / crashes
-	serverInstance.once('exit', async ( code ) => {
+	_serverInstance.once('exit', async ( code ) => {
 		// Unlock server business
-		serverBusyLocked = false;
+		_serverBusyLocked = false;
 		// If there are no listeners yet, the process crashed at init
-		if ( onServerExitSignal.listeners.length === 0 )
-			config.logger.print(`{b/r}Server ${code === 0 ? 'stopped' : 'crashed'} at init ${ code === 0 ? 'without error code' : 'with code '+code}.`)
+		if ( _onServerExitSignal.listeners.length === 0 )
+			_config.logger.print(`{b/r}Server ${code === 0 ? 'stopped' : 'crashed'} at init ${ code === 0 ? 'without error code' : 'with code '+code}.`)
 		// Dispatch for exit listeners and clean
-		onServerExitSignal.dispatch( code );
-		onServerExitSignal.clear();
-		serverInstance.removeAllListeners();
-		serverInstance = null
+		_onServerExitSignal.dispatch( code );
+		_onServerExitSignal.clear();
+		_serverInstance.removeAllListeners();
+		_serverInstance = null
 		// Wait for file changes to rebuild
-		if ( onServerExitSignal.listeners.length > 0 )
-			config.logger.print(`{b/c}Waiting for file change...`)
+		if ( _onServerExitSignal.listeners.length > 0 )
+			_config.logger.print(`{b/c}Waiting for file change...`)
 	})
 	// TODO : Implement lock to avoid parallel serverInstances running
-	serverBusyLocked = false
+	_serverBusyLocked = false
 }
 
 function killServer () {
 	// FIXME : Other signals to force exit ?
 	// FIXME : 'SIGINT' // force ? "SIGKILL" : "SIGTERM"
-	serverInstance.kill( config.dev.killSignal ?? 'SIGINT' );
+	_serverInstance.kill( _config.dev.killSignal ?? 'SIGINT' );
 }
 
 async function stopServer () {
-	if ( !serverInstance ) return;
-	serverBusyLocked = true
+	if ( !_serverInstance ) return;
+	_serverBusyLocked = true
 	await new Promise<void>( resolve => {
-		config.logger.print("{b/c}Stopping server ...", { newLine: false });
+		_config.logger.print("{b/c}Stopping server ...", { newLine: false });
 		onServerExit().then( async code => {
-			config.logger.print(' {b/g}stopped')
-			serverBusyLocked = false
+			_config.logger.print(' {b/g}stopped')
+			_serverBusyLocked = false
 			resolve()
 		})
 		killServer();
@@ -180,44 +180,46 @@ async function stopServer () {
 }
 
 async function restartServer () {
-	if ( serverBusyLocked ) return;
+	if ( _serverBusyLocked ) return;
 	await stopServer()
 	await startServer()
 }
 
 // ----------------------------------------------------------------------------- BUILD
 
-let buildContext:BuildContext
+let _buildContext:BuildContext
 
 function buildFailed ( error, code = 1 ) {
-	config.logger.print(`{b/r}Build failed`)
-	config.logger.error( error )
+	_config.logger.print(`{b/r}Build failed`)
+	_config.logger.error( error )
 	process.exit( code );
 }
 
 function buildResult ( result, isFirst = false ) {
-	result.warnings.forEach( w => config.logger.print(`{b/o}Warn > ${w}`) )
-	result.errors.length === 0 && config.logger.print(isFirst ? `{b/g} success`: `{b/g}Rebuilt ✨`);
+	result.warnings.forEach( w => _config.logger.print(`{b/o}Warn > ${w}`) )
+	result.errors.length === 0 && _config.logger.print(isFirst ? `{b/g} success`: `{b/g}Rebuilt ✨`);
 }
 
 /**
  * Build server in watch or build mode.
  */
 export async function buildServer ( mode:TBuildMode ) {
-	buildMode = mode
-	if ( !config )
+	// Set config locally from global
+	_buildMode = mode
+	if ( !global._nodeServerConfig )
 		throw new Error("Please use defineConfig in your server config file.")
+	_config = global._nodeServerConfig
 	// Print without line jump for the "success"
-	config.logger.print(`{b/c}Building server ...`, { newLine: false })
+	_config.logger.print(`{b/c}Building server ...`, { newLine: false })
 	// Build server
 	try {
 		const plugins = [
 			keepNodeModulesPlugin,
-			...config.esPlugins,
+			..._config.esPlugins,
 		];
-		if ( buildMode === "dev" )
+		if ( _buildMode === "dev" )
 			plugins.push( watchPlugin )
-		buildContext = await context({
+		_buildContext = await context({
 			target: 'node16',
 			platform: 'node',
 			format: 'esm',
@@ -226,10 +228,10 @@ export async function buildServer ( mode:TBuildMode ) {
 			logLevel: 'silent',
 			plugins,
 			// Inject custom es options before forced options
-			...config.esOptions,
+			..._config.esOptions,
 			// Forced options (not available in config)
-			entryPoints: [ config.input ],
-			outfile: config.output,
+			entryPoints: [ _config.input ],
+			outfile: _config.output,
 		})
 	}
 	// Display errors
@@ -239,19 +241,19 @@ export async function buildServer ( mode:TBuildMode ) {
 		return;
 	}
 	// Dev mode
-	if ( buildMode === "dev" ) {
+	if ( _buildMode === "dev" ) {
 		// Verify config, we need a dev command
-		!config.dev && nicePrint(`{b/r}Please set dev config to use dev mode.`, {
+		!_config.dev && nicePrint(`{b/r}Please set dev config to use dev mode.`, {
 			code: 1
 		})
 		// Start watch ( watch plugin will start server )
-		await buildContext.watch()
+		await _buildContext.watch()
 	}
 	// Build mode
 	else {
-		const results = await buildContext.rebuild();
+		const results = await _buildContext.rebuild();
 		buildResult( results, true )
-		await buildContext.dispose();
+		await _buildContext.dispose();
 	}
 }
 
@@ -265,7 +267,7 @@ export function defineConfig ( configHandler:IConfigHandler ) {
 	// Get user config
 	let userConfig
 	if ( typeof configHandler === "function" )
-		userConfig = configHandler( buildMode )
+		userConfig = configHandler( _buildMode )
 	else if ( typeof configHandler === "object" && !Array.isArray(configHandler) )
 		userConfig = configHandler
 	else {
@@ -278,16 +280,19 @@ export function defineConfig ( configHandler:IConfigHandler ) {
 	}
 	// Compute config from default and user config
 	// Store in module scope
-	config = {
+	const configBeforeExpose:Partial<INodeServerConfig> = {
 		logger: createDefaultLogger( userConfig.logPrefix ?? "server" ),
 		esOptions: {},
 		esPlugins: [],
 		...userConfig
 	}
 	// Compute default env from config
-	if ( typeof config.env === "undefined" )
-		config.env = process.env
-	else if ( typeof config.env === "function" )
-		config.env = config.env()
+	if ( typeof configBeforeExpose.env === "undefined" )
+		configBeforeExpose.env = process.env
+	else if ( typeof configBeforeExpose.env === "function" )
+		configBeforeExpose.env = configBeforeExpose.env( process.env )
+	// Expose as global variable in node.
+	// We need this because sometimes es2019 and es2022 are loaded from the same runtime
+	global._nodeServerConfig = configBeforeExpose
 }
 
