@@ -27,12 +27,13 @@ Opinionated vite plugin collection and presets for my front-end workflow.
 
 ## Presets
 
-- [With node-server](./presets/node-server)
+- [Node server](./presets/node-server)
   - Integrated workflow with Express or Fastify server
   - Watch mode for server
   - Typescript for server
   - Vite proxy
   - No cors issue
-- [Without server](./presets/without-server)
-  - With your own server ( ex PHP )
-  - Use to create an SPA without server
+- [PHP Server](./presets/php-server)
+  - With your own PHP server
+- [Single Page Application](./presets/single-page-application)
+  - No server at all

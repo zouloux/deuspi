@@ -9,7 +9,6 @@ import { env } from "vite-plugin-env";
 import checker from "vite-plugin-checker";
 import { createCustomViteLogger } from "@zouloux/node-server";
 // import prefresh from '@prefresh/vite';
-// import { typeCheck } from "../../packages/vite-plugin-typecheck/vite-plugin-typecheck"
 
 export default defineConfig( viteConfig => {
 	const isDev = viteConfig.mode === 'development'
