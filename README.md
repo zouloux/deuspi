@@ -10,7 +10,7 @@ Opinionated vite plugin collection and presets for my front-end workflow.
   - Plays well with **vite**.
   - Has a vite proxy for **Express** and **Fastify**
   - `npm i -D @zouloux/node-server`
-- [@zouloux/vite-config-helpers](./packages/node-server)
+- [@zouloux/vite-config-helpers](./packages/vite-config-helpers)
   - Tiny helpers for vite config
   - Check [presets](./presets) to know more
   - `npm i -D @zouloux/vite-config-helpers`
