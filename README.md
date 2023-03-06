@@ -1,5 +1,5 @@
 
-# 🗣️ Deu-spi
+# Deu-spi
 
 Opinionated vite plugin collection and presets for my front-end workflow.
 
