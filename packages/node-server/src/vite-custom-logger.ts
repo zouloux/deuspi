@@ -45,7 +45,7 @@ export function createCustomViteLogger ( options:ICustomLoggerOptions ) {
 			warn( msg, params ) {
 				nicePrint(`{b/o}${msg}`)
 			},
-			clearScreen: () => clearScreen()
+			clearScreen: () => clearScreen( false )
 		}
 	}
 }
