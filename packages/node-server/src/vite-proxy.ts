@@ -12,8 +12,8 @@ interface IServeFrontEndOptions {
 }
 
 export function serveFrontEnd ( options:IServeFrontEndOptions ) {
-	const { server, fastifyStatic, isDev, upstream, root, index = "index.html" } = options
-	if ( options.isDev ) {
+	const { server, fastifyStatic, isDev, upstream, root, index = "/index.html" } = options
+	if ( isDev ) {
 		server.addHook('onRequest', async (request, reply) => {
 			let requestPath = leading( request.url, true )
 			if ( requestPath === "/" )

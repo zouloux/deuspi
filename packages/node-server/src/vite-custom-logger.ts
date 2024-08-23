@@ -1,4 +1,4 @@
-import { nicePrint } from "@zouloux/cli";
+import { nicePrint, clearScreen } from "@zouloux/cli";
 
 /**
  * TODO : Allow custom info / error / warn
@@ -45,6 +45,7 @@ export function createCustomViteLogger ( options:ICustomLoggerOptions ) {
 			warn( msg, params ) {
 				nicePrint(`{b/o}${msg}`)
 			},
+			clearScreen: () => clearScreen()
 		}
 	}
 }
