@@ -1,6 +1,4 @@
 import { defineConfig } from 'vite'
-import legacy from "@vitejs/plugin-legacy"
-import Inspect from "vite-plugin-inspect"
 import { readJSON, F, viteCssModuleConfig, viteCssLessConfig } from "@zouloux/vite-config-helpers";
 import { atomizer } from "vite-plugin-atomizer"
 import { ViteMinifyPlugin } from 'vite-plugin-minify'
@@ -15,7 +13,6 @@ export default defineConfig( viteConfig => {
 	// We need a fixed port here because node server will proxy vite server
 	const port = 5173
 	// console.log(checker())
-
 	return {
 		// Use custom vite logger for server-build
 		...createCustomViteLogger({ isDev, prefix: "deuspi" }),
@@ -35,7 +32,9 @@ export default defineConfig( viteConfig => {
 			assetsDir: "./",
 			rollupOptions: {
 				input: F([
-					'src/client/index.html'
+					// Do not name it index.html, otherwise proxy will return
+					// any not found to index.html
+					'src/client/app.html'
 				]),
 			},
 		},
@@ -49,10 +48,6 @@ export default defineConfig( viteConfig => {
 			jsxFactory: 'h'
 		},
 		plugins: [
-			// Inspect vite plugins
-			// isDev && Inspect(),
-			// Enable legacy compatible builds
-			legacy({ targets: ["defaults", "not IE 11"] }),
 			// Minify HTML in production
 			!isDev && ViteMinifyPlugin(),
 			// Enable typescript checker
