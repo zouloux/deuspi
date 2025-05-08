@@ -290,7 +290,7 @@ export function defineConfig ( configHandler:IConfigHandler ) {
 		...userConfig
 	}
 	let envs = {
-		process: process.env,
+		...process.env,
 		NODE_ENV: "development"
 	}
 	if ( Array.isArray(configBeforeExpose.envFiles) ) {
