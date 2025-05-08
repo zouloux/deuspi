@@ -3,6 +3,8 @@ import { spawn } from "child_process"
 import { Signal } from "@zouloux/signal"
 import { newLine, nicePrint, clearScreen } from "@zouloux/cli";
 import { delay } from "@zouloux/ecma-core";
+import { existsSync, readFileSync } from "fs";
+import { parse } from "dotenv";
 
 /**
  * TODO : Add on signal in options ( build / fail / etc )
@@ -31,6 +33,7 @@ export interface INodeServerConfig
 	logger	?:ILogger
 	logPrefix ?:string
 	// Env
+	envFiles ?:string[]
 	env 	?:any|((env:any) => any)
 }
 
@@ -137,7 +140,7 @@ async function startServer () {
 		// detached: false,
 		cwd: _config.dev.cwd ?? process.cwd(),
 		env: _config.env,
-		stdio: 'inherit'
+		stdio: 'inherit',
 	});
 	// Listen for server exit / crashes
 	_serverInstance.once('exit', async ( code ) => {
@@ -286,11 +289,27 @@ export function defineConfig ( configHandler:IConfigHandler ) {
 		esPlugins: [],
 		...userConfig
 	}
+	let envs = {
+		process: process.env,
+		NODE_ENV: "development"
+	}
+	if ( Array.isArray(configBeforeExpose.envFiles) ) {
+		configBeforeExpose.envFiles.forEach( envFile => {
+			if ( !existsSync(envFile) ) {
+				nicePrint(`{b/r}Unable to load env ${envFile}`)
+				process.exit(3)
+			}
+			const content = readFileSync(envFile).toString()
+			const envObject = parse(content)
+			envs = { ...envs, ...envObject }
+		})
+	}
 	// Compute default env from config
-	if ( typeof configBeforeExpose.env === "undefined" )
-		configBeforeExpose.env = process.env
+	if ( typeof configBeforeExpose.env === "object" )
+		envs = { ...envs, ...configBeforeExpose.env }
 	else if ( typeof configBeforeExpose.env === "function" )
-		configBeforeExpose.env = configBeforeExpose.env( process.env )
+		envs = { ...envs, ...(configBeforeExpose.env( envs )) }
+	configBeforeExpose.env = envs
 	// Expose as global variable in node.
 	// We need this because sometimes es2019 and es2022 are loaded from the same runtime
 	global._nodeServerConfig = configBeforeExpose

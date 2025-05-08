@@ -1,6 +1,6 @@
 {
   "name": "@zouloux/node-server",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Node server with esbuild, watch mode, and a fastify proxy for dev assets.",
   "type": "module",
   "main": "./dist/index.es2019.cjs",
@@ -29,6 +29,7 @@
     "@zouloux/cli": "^0.2.1",
     "@zouloux/ecma-core": "^0.2.3",
     "@zouloux/signal": "^0.2.4",
+    "dotenv": "^16.5.0",
     "esbuild": "^0.17.6",
     "node-fetch": "^3.3.0"
   },

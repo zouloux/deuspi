@@ -62,8 +62,10 @@ export interface INodeServerConfig
 	// Logger
 	logger?:ILogger
 	logPrefix?:string
-	// Env
-	env?:any
+  	// Load envs in order and override process.env
+  	envFiles:string[]
+	// Custom inject envs overridden upon env files like { NODE_ENV: "production" }
+	env?:object
 }
 ```
 
