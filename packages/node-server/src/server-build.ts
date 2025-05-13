@@ -25,6 +25,7 @@ export interface INodeServerConfig
 		command		: string
 		cwd			?: string
 		killSignal	?: string
+		restartDelay?:number
 	},
 	// Es options
 	esOptions	?:Partial<BuildOptions>
@@ -185,6 +186,7 @@ async function stopServer () {
 async function restartServer () {
 	if ( _serverBusyLocked ) return;
 	await stopServer()
+	await delay(_config.dev.restartDelay ?? .1)
 	await startServer()
 }
 
